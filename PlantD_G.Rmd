@@ -1,0 +1,233 @@
+---
+title: 'Lab 5: Plant Differentiation and Growth'
+output:
+  pdf_document: default
+  word_document: default
+---
+## Pre-Setup
+
+Before we begin to use R today, calculate the average of your light and dark seedlings at each interval (2 days, 4 days, and 6 days) using Google Sheets. Once you have these numbers, load them into the class data sheet (your TA will provide this). This data sheet is what you'll use during this lab.
+
+## 1. Load Data Into R
+
+We will use a similar procedure as the last lab to load data into R so that we can work with it.
+
+* Make a new project in a new folder and open a new script.
+* Load libraries you will need: `ggplot2`, `gsheet`, and  `dplyr`
+
+For this lab we will provide you with the directions of what to do by showing you the comments you should enter in you R script.
+
+* Copy the comment lines into your script
+* Enter the necessary code based on the previous lab. In any case where you have not seen the necessary code before, it is provided.
+
+```{r load1}
+# Load the libraries ggplot2, gsheet, dyplyr, and Hmisc. 
+```
+
+```{r load2, echo=FALSE, message=FALSE}
+library(ggplot2)
+library(gsheet)
+library(dplyr)
+library(Hmisc)
+```
+
+Next, load in the data. Today's data is found at:
+
+https://docs.google.com/spreadsheets/d/1MOkh3SNsuuTixjRFi4ptYmjimUJ9rGXIta1iJDjre9k
+
+```{r load3}
+# Assign website address for the data to a variable
+```
+
+```{r load4, echo=FALSE}
+url <- 'https://docs.google.com/spreadsheets/d/1MOkh3SNsuuTixjRFi4ptYmjimUJ9rGXIta1iJDjre9k'
+```
+
+```{r }
+# Load the data from google sheets
+```
+
+```{r load5, echo=FALSE}
+plant_data <- gsheet2tbl(url)
+```
+
+Remember, once we have our data in, it is always good to check to make sure the data was imported correctly. Use `head` to check your imported data. 
+
+```{r head, eval=FALSE}
+# Check your data looks right (first lines only)
+head(plant_data)
+```
+
+
+## 2. Graphing the seedling Data
+
+Just like last time, we are going to use `ggplot` to graph the data. Because we want to compare the seedlings grown under light and dark conditions, we are going to graph both sets of data together. We are first going to graph the data as points and then put the standard deviation bars on top. This way you can visually see how much variance is in your data. A very large standard deviation bar means there is a lot of variance, while a smaller standard deviation bar means there is less variance in your data. 
+
+### First create the base layer of your plot
+
+* What is the independent variable (x axis)?
+* What is the dependent variable (y axis)?
+* How will you plot light and dark conditions separately?
+
+```{r plot1}
+# Make the base layer of your plot
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure))
+```
+* Missing places in your data can sometimes give R trouble. In graphing your points, you'll want to tell R to ignore those blank spots in your data sheet with the command '!is.na(x), where the x is the data that you are analyzing that has NAs in it. 
+
+### Second, add the data to the plot (using `geom_point`)
+
+```{r plot2}
+# Add the data to your plot
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure)) +
+  geom_point()
+```
+
+### Third add standard deviation bars and the mean to your plot
+
+* It appears that there are differences in seedling heights between the two different growing conditions. However, if there is a lot of variation in our data those differences may not be significant (remember the t-test from last lab). 
+
+* The *standard deviation* is how much the individual data points differ from the overall mean. This puts a single value on how much variation there is in the data. For example, if we saw seedling heights of 3, 2.9, 3, and 3.1, we would have a small standard deviation. However, if we had seedling heights of 0.5, 5.5, 2, and 4, the standard deviation would be high. 
+
+The function stat_summary allows you to neatly summarize mean and standard deviation on your plot. Here we are putting two different arguments on our graph, the mean and the standard deviation. Lets break down what each argument does:
+
+First we want to put our mean points on the graph with the code 'stat_summary(fun.y=mean, geom="point", aes(color=exposure))'. 
+
+*fun.y=mean tells stat.summary to plot the mean on our graphs. 
+
+*geom="point" tells the function to make the mean a dot (or point) on the graph
+
+```{r plot3}
+# Add the mean point to your data
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure)) +
+  geom_point()  +
+  stat_summary(fun.y=mean, geom="point", aes(color=exposure)) 
+  
+```
+
+Do you see your mean point? If you cannot, this means that your mean point is the same size as the rest of your points. Try increasing its size. 
+
+```{r plot4}
+#Make the mean point larger
+
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure)) +
+  geom_point()  +
+  stat_summary(fun.y=mean, geom="point", aes(color=exposure), size=5) 
+  
+```
+
+Now you'll want to add your standard deviation bars with the second line of code 'stat_summary(fun.data=mean_sdl, geom="errorbar" aes(color=exposure))'. 
+
+*fun.data is a function that tells what stat_summary should graph. Here 'mean_sdl' is telling the function to graph the standard deviation bars around the mean
+
+*geom="errorbar" draws an errorbar that has an upper and lower value. In this case, the upper value is the mean + the standard deviation and the lower value is the mean - the standard deviation. 
+
+*aes(color=exposure) is letting the graph know that we have two different treatments, light and dark, and to make the standard deviation bars the appropriate color.
+
+
+```{r plot5}
+# Add the standard deviation bars to your graph 
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure)) +
+  geom_point()  +
+  stat_summary(fun.y=mean, geom="point", aes(color=exposure), size=5) +
+  stat_summary(fun.data=mean_sdl, geom="errorbar", aes(color=exposure))
+  
+```
+
+*Last, its good to clean up your graph. AS you can see, those error bars are a little messy. Try changing their width to make them more professional looking. 
+
+```{r plot6}
+# Clean up standard deviation bars
+
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure)) +
+  geom_point()  +
+  stat_summary(fun.y=mean, geom="point", aes(color=exposure), size=5) +
+  stat_summary(fun.data=mean_sdl, geom="errorbar", aes(color=exposure), width=.2)
+  
+```
+
+
+### Fourth, add labels to your graph
+Just like last class, you'll want to clean up your graph and make it look professional.
+
+* To label the axes make a new layer using `labs(x="", y="", color="")`. Enter labels for the x axis, y axis, and legend in the quotes.
+
+* Optional: to change the error bars add and set the parameter `width` to `geom_errorbar`.
+
+
+```{r plot7}
+# Label your plot and change axes titles 
+
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, colour=exposure)) +
+  geom_point()  +
+  stat_summary(fun.data=mean_sdl, geom="errorbar", width=.2, aes(color=exposure)) +
+  stat_summary(fun.y=mean, geom="point", aes(color=exposure), size=3.75) +
+labs(x="Forrester x label", y="Forrester y label", color="Forrester change legend title")
+```
+
+## 3. Plot the Data using geom_boxplot
+
+Another way to visualize your data is in a boxplot, which you've done before in lab 1. If you remember, instead of showing the mean and standard deviaiton, boxplots show you the median, upper and lower quartiles, and the outliers
+
+```{r plot8}
+# Add the bars to your plot
+
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, fill=exposure)) +
+  geom_boxplot() 
+
+```
+
+### add labels
+Just like your last plot, you'll want to change the lables to clean up your graph.
+
+```{r plot9}
+
+#Label your plot and change axes titles
+
+ggplot(data = subset(plant_data, !is.na(height)), aes(x=factor(day), y=height, fill=exposure),na.omit()) +
+  geom_boxplot() +
+labs(x="Forrester x label", y="Forrester y label",
+       fill="Forrester change legend title")
+```
+
+
+## 4. Perform a t-test 
+
+Just like in the Mechanisms of Evolution lab, we now have data in which we want to see if there is a statistcal difference between two groups. In this case, were interested to see if there is a difference between seedling heights in the 2 day old, 4 day old, and 6 day old seedlings. Lets walk through how to do a t-test for the 2 day old seedlings. 
+
+First we filter our light and dark grown seedlings for the day 2 time period.  
+
+```{r }
+# Subset plant data by exposure and growth time.  
+
+Light2Day <- filter(plant_data, exposure=="light" & day=="2")
+Dark2Day <- filter(plant_data, exposure=="dark" & day=="2")
+
+```
+
+**What is your null hypothesis for the 2 day old seedling data?**
+
+```{r, eval=FALSE}
+# My null hypothesis is: 
+
+# 2dayold_ttest
+t.test(Light2Day$height, Dark2Day$height)
+```
+
+## Answer the following questions
+
+* Under which condition did the seedlings grow better? Light or dark? 
+
+* Which of the day(s) proved to have statistical differences between the light and dark seedlings? Remeber to do the 4 day old and the 6 day old t-tests on your own. 
+
+* What do your standard deviation bars look like? What does it mean to have a large standard deviation bar? 
+
+## Need more information on mean and standard deviation?
+
+Check out this interactive website for a better understanding of mean and standard deviation!
+
+http://www.zoology.ubc.ca/~whitlock/Kingfisher/SamplingNormal.htm
+
+
+
+
